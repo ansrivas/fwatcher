@@ -1,10 +1,45 @@
-hash: aa5a1e2b349d694b4cbde3ac569b5a17bfb4cca18c3ca448f9c40a02b9ab380f
-updated: 2017-03-05T22:27:50.638345647+01:00
+hash: d7d056020e534d54c4b2441496e3c68d7f91c04ebb98b082dc9964111ac34277
+updated: 2017-03-05T22:58:52.807403071+01:00
 imports:
+- name: github.com/AsynkronIT/goconsole
+  version: bfa12eebf7161a928e20d11a627cc689e99e2e50
+- name: github.com/AsynkronIT/gonet
+  version: 0553637be2257d123c1c1877d1f3bbd23adce41d
+- name: github.com/couchbase/gocb
+  version: 6fca8af693ca20d33fd8427a09636362061a3b71
+- name: github.com/emirpasic/gods
+  version: 9e8ccee73d6de5ce4d67b8642199b887eff1e36e
+  subpackages:
+  - sets/hashset
+  - stacks/linkedliststack
+- name: github.com/gogo/protobuf
+  version: 909568be09de550ed094403c2bf8a261b5bb730a
+  subpackages:
+  - gogoproto
+  - proto
+  - protoc-gen-gofast
+  - protoc-gen-gogo
+  - protoc-gen-gogofast
+  - protoc-gen-gogofaster
+  - protoc-gen-gogoslick
+- name: github.com/hashicorp/consul
+  version: 21f2d5ad0c02af6c4b32d8fd04f7c81e9b002d41
+  subpackages:
+  - api
+- name: github.com/orcaman/concurrent-map
+  version: 33c5bcbc98a8c1699b433720ec85c48dd6a62a6e
+- name: github.com/serialx/hashring
+  version: b686d66ce08cf020eda4758a8e42ccdbe8ff8481
 - name: github.com/spf13/pflag
   version: 51268031d79952516489a9f8aa34e9709b98d946
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
+- name: github.com/Workiva/go-datastructures
+  version: dd1dc71ac92298310606ac77d9519ddf1c6e2500
+  subpackages:
+  - queue
+- name: google.golang.org/grpc
+  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
 testImports: []
