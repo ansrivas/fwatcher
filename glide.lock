@@ -1,6 +1,8 @@
-hash: 831f23298da9af9c51ac7fc0d67976df7e65c65897eb7f21cc029d2f000778a1
-updated: 2017-03-05T22:08:33.445914407+01:00
+hash: aa5a1e2b349d694b4cbde3ac569b5a17bfb4cca18c3ca448f9c40a02b9ab380f
+updated: 2017-03-05T22:27:50.638345647+01:00
 imports:
+- name: github.com/spf13/pflag
+  version: 51268031d79952516489a9f8aa34e9709b98d946
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
