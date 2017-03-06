@@ -1,17 +1,31 @@
-hash: d7d056020e534d54c4b2441496e3c68d7f91c04ebb98b082dc9964111ac34277
-updated: 2017-03-05T22:58:52.807403071+01:00
+hash: 92353c8d913cb49aca85df03141a312cf7c820f6441adb1ed8c6ec68e2e6e9a7
+updated: 2017-03-06T22:18:48.079791593+01:00
 imports:
 - name: github.com/AsynkronIT/goconsole
   version: bfa12eebf7161a928e20d11a627cc689e99e2e50
 - name: github.com/AsynkronIT/gonet
   version: 0553637be2257d123c1c1877d1f3bbd23adce41d
+- name: github.com/AsynkronIT/protoactor-go
+  version: ffac44f5585e6c1d1c6dc2f6b0ce727cb6e3d12b
+  subpackages:
+  - actor
+  - eventstream
+  - internal/queue/goring
+  - internal/queue/mpsc
+  - log
+  - mailbox
 - name: github.com/couchbase/gocb
   version: 6fca8af693ca20d33fd8427a09636362061a3b71
 - name: github.com/emirpasic/gods
-  version: 9e8ccee73d6de5ce4d67b8642199b887eff1e36e
+  version: f6c17b524822278a87e3b3bd809fec33b51f5b46
   subpackages:
+  - containers
+  - lists
+  - lists/singlylinkedlist
   - sets/hashset
+  - stacks
   - stacks/linkedliststack
+  - utils
 - name: github.com/gogo/protobuf
   version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
@@ -19,6 +33,7 @@ imports:
   - proto
   - protoc-gen-gofast
   - protoc-gen-gogo
+  - protoc-gen-gogo/descriptor
   - protoc-gen-gogofast
   - protoc-gen-gogofaster
   - protoc-gen-gogoslick
@@ -28,6 +43,8 @@ imports:
   - api
 - name: github.com/orcaman/concurrent-map
   version: 33c5bcbc98a8c1699b433720ec85c48dd6a62a6e
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/serialx/hashring
   version: b686d66ce08cf020eda4758a8e42ccdbe8ff8481
 - name: github.com/spf13/pflag
