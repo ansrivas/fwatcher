@@ -1,5 +1,5 @@
-hash: 92353c8d913cb49aca85df03141a312cf7c820f6441adb1ed8c6ec68e2e6e9a7
-updated: 2017-03-06T22:18:48.079791593+01:00
+hash: d985c757fb2f849469322f7ad4ae8de20aed2de0c2191b461946e7186776659d
+updated: 2017-03-06T23:19:38.434755644+01:00
 imports:
 - name: github.com/AsynkronIT/goconsole
   version: bfa12eebf7161a928e20d11a627cc689e99e2e50
@@ -26,6 +26,8 @@ imports:
   - stacks
   - stacks/linkedliststack
   - utils
+- name: github.com/fsnotify/fsnotify
+  version: a904159b9206978bb6d53fcc7a769e5cd726c737
 - name: github.com/gogo/protobuf
   version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
@@ -41,14 +43,43 @@ imports:
   version: 21f2d5ad0c02af6c4b32d8fd04f7c81e9b002d41
   subpackages:
   - api
+- name: github.com/hashicorp/hcl
+  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/magiconair/properties
+  version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+- name: github.com/mitchellh/mapstructure
+  version: db1efb556f84b25a0a13a04aad883943538ad2e0
 - name: github.com/orcaman/concurrent-map
   version: 33c5bcbc98a8c1699b433720ec85c48dd6a62a6e
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: 22139eb5469018e7374b3e7ef653de37ffb44f72
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/serialx/hashring
   version: b686d66ce08cf020eda4758a8e42ccdbe8ff8481
+- name: github.com/spf13/afero
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: d1139bab1c07d5ad390a65e7305876b3c1a8370b
+- name: github.com/spf13/jwalterweatherman
+  version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
   version: 51268031d79952516489a9f8aa34e9709b98d946
+- name: github.com/spf13/viper
+  version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
@@ -57,6 +88,17 @@ imports:
   version: dd1dc71ac92298310606ac77d9519ddf1c6e2500
   subpackages:
   - queue
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: 85c29909967d7f171f821e7a42e7b7af76fb9598
+  subpackages:
+  - transform
+  - unicode/norm
 - name: google.golang.org/grpc
   version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+- name: gopkg.in/yaml.v2
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports: []

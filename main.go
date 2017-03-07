@@ -6,13 +6,14 @@ import (
 
 	"github.com/AsynkronIT/goconsole"
 	"github.com/AsynkronIT/protoactor-go/actor"
+	conf "github.com/fwatcher/internal"
 	flag "github.com/spf13/pflag"
 )
 
-var configName string
+var configPath string
 
 func init() {
-	flag.StringVar(&configName, "config", "", "path to a configuration file")
+	flag.StringVar(&configPath, "config", "", "path to a configuration file")
 }
 
 type hello struct{ Who string }
@@ -27,10 +28,16 @@ func (state *helloActor) Receive(context actor.Context) {
 
 func main() {
 	flag.Parse()
-	if configName == "" {
+	if configPath == "" {
 		log.Fatalf("No config file provided... ")
 	}
-	fmt.Println("config file is:", configName)
+	config, err := conf.GetConfig(configPath)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	hosts := config.GetString("kafka.hosts")
+	dirToWatch := config.GetString("app.dir")
+	log.Println(hosts, dirToWatch)
 	props := actor.FromInstance(&helloActor{})
 	pid := actor.Spawn(props)
 	pid.Tell(&hello{Who: "Roger"})
