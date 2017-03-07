@@ -39,3 +39,5 @@ import:
 - package: github.com/pkg/errors
   version: ^0.8.0
 - package: github.com/spf13/viper
+- package: gopkg.in/Shopify/sarama.v1
+  version: ^1.11.0

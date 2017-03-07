@@ -1,12 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/AsynkronIT/goconsole"
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/fsnotify/fsnotify"
 	conf "github.com/fwatcher/internal"
+	"github.com/fwatcher/messages"
+	"github.com/fwatcher/workers"
 	flag "github.com/spf13/pflag"
 )
 
@@ -16,18 +23,38 @@ func init() {
 	flag.StringVar(&configPath, "config", "", "path to a configuration file")
 }
 
-type hello struct{ Who string }
-type helloActor struct{}
+func watchDirectory(ctx context.Context, dirToWatch string, pid *actor.PID) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
 
-func (state *helloActor) Receive(context actor.Context) {
-	switch msg := context.Message().(type) {
-	case *hello:
-		fmt.Printf("Hello %v\n", msg.Who)
+	err = watcher.Add(dirToWatch)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		select {
+		case event := <-watcher.Events:
+
+			log.Println(event.Op)
+			if event.Op == fsnotify.Create {
+				log.Println("File created...")
+				pid.Tell(&messages.FileModified{Filename: event.Name})
+			}
+
+		case err := <-watcher.Errors:
+			log.Println("error:", err)
+
+		}
 	}
 }
-
 func main() {
 	flag.Parse()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	if configPath == "" {
 		log.Fatalf("No config file provided... ")
 	}
@@ -35,11 +62,29 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
 	hosts := config.GetString("kafka.hosts")
 	dirToWatch := config.GetString("app.dir")
 	log.Println(hosts, dirToWatch)
-	props := actor.FromInstance(&helloActor{})
+
+	sigchan := make(chan os.Signal, 1)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+
+	backoffWindow := time.Duration(time.Second * 10)
+	initialBackoff := time.Duration(time.Second * 3)
+
+	supervisor := actor.NewExponentialBackoffStrategy(backoffWindow, initialBackoff)
+
+	props := actor.
+		FromProducer(workers.NewCoordinatorActor).
+		WithSupervisor(supervisor)
+
 	pid := actor.Spawn(props)
-	pid.Tell(&hello{Who: "Roger"})
-	console.ReadLine()
+
+	go watchDirectory(ctx, dirToWatch, pid)
+
+	<-sigchan
+	cancel()
+	fmt.Printf("Terminating the program successfully\n")
+
 }
