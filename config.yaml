@@ -1,0 +1,4 @@
+kafka:
+    hosts: "localhost:9092"
+app:
+    dir: ./
