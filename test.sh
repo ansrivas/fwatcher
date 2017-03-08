@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# From https://github.com/kpurdon/beercellar/blob/master/test.sh
 set -e
 echo "" > coverage.txt
 
