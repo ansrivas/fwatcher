@@ -19,8 +19,8 @@ func (parent *coordinatorActor) Receive(context actor.Context) {
 	case *messages.FileModified:
 		parent.fileReader.Tell(&messages.ReadFile{Filename: msg.Filepath})
 		// context.Request(parent.fileReader, &messages.ReadFile{Filename: msg.Filepath})
-	case *messages.FileContent:
-		fmt.Println("File content in parents:", msg.Content)
+	case *messages.PublishAck:
+		fmt.Println("File has been successfully published to kafka")
 	}
 }
 

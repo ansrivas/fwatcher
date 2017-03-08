@@ -37,8 +37,8 @@ func (state *fileReadActor) Receive(context actor.Context) {
 	case *messages.ReadFile:
 
 		data := readFile(msg.Filename)
-		context.Parent().Tell(&messages.FileContent{Content: data})
 		state.p.Produce(data)
+		context.Parent().Tell(&messages.PublishAck{})
 
 		// context.Sender().Tell(&messages.FileContent{Content: data})
 		//Testing inform self
@@ -46,8 +46,8 @@ func (state *fileReadActor) Receive(context actor.Context) {
 
 		//Testing poison pill
 		// context.Self().Tell(&actor.PoisonPill{})
-	case *messages.FileContent:
-		fmt.Println("File content in child:", msg.Content)
+	case *messages.PublishAck:
+		fmt.Println("File has been successfully published")
 	}
 }
 

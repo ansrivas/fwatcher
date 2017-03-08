@@ -6,8 +6,8 @@ type FileModified struct{ Filepath string }
 //ReadFile message is to read a given filename with path
 type ReadFile struct{ Filename string }
 
-//FileContent sends the content of the file in the message
-type FileContent struct{ Content string }
+//PublishAck sends the ack about publishing to kafka
+type PublishAck struct{}
 
 //Publisher publishes a given message to a kafka topic
 type Publisher struct{ Content string }
