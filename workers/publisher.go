@@ -8,8 +8,13 @@ import (
 	"gopkg.in/Shopify/sarama.v1"
 )
 
-//Produce produces a test message
-func Produce(value string) {
+// Producer ...
+type Producer struct {
+	kafkaProducer sarama.AsyncProducer
+}
+
+//NewProducer ...
+func NewProducer() Producer {
 	brokerList := strings.Split("localhost:9092", ",")
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForLocal       // Only wait for the leader to ack
@@ -20,10 +25,14 @@ func Produce(value string) {
 	if err != nil {
 		log.Fatalln("Failed to start Sarama producer:", err)
 	}
+	return Producer{kafkaProducer: producer}
+}
 
-	producer.Input() <- &sarama.ProducerMessage{
+//Produce produces a test message
+func (p Producer) Produce(value string) {
+	p.kafkaProducer.Input() <- &sarama.ProducerMessage{
 		Topic: "access_log",
-		Key:   sarama.StringEncoder("CNA00001"),
+		Key:   sarama.StringEncoder("my_key"),
 		Value: sarama.StringEncoder(value),
 	}
 }

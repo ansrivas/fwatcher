@@ -1,7 +1,7 @@
 package messages
 
 //FileModified message informs the actor about reading the file and sends the filename
-type FileModified struct{ Filename string }
+type FileModified struct{ Filepath string }
 
 //ReadFile message is to read a given filename with path
 type ReadFile struct{ Filename string }

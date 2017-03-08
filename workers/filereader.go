@@ -9,7 +9,9 @@ import (
 	"github.com/fwatcher/messages"
 )
 
-type fileReadActor struct{}
+type fileReadActor struct {
+	p Producer
+}
 
 func newfileReadActor() actor.Actor {
 	return &fileReadActor{}
@@ -29,13 +31,16 @@ func CreateFileReaderPropsGlobal() *actor.PID {
 
 func (state *fileReadActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
+
+	case *actor.Started:
+		state.p = NewProducer()
 	case *messages.ReadFile:
 
-		fmt.Printf("Now reading file: %v \n", msg.Filename)
 		data := readFile(msg.Filename)
-		// context.Parent().Tell(&messages.FileContent{Content: data})
-		context.Sender().Tell(&messages.FileContent{Content: data})
-		Produce(data)
+		context.Parent().Tell(&messages.FileContent{Content: data})
+		state.p.Produce(data)
+
+		// context.Sender().Tell(&messages.FileContent{Content: data})
 		//Testing inform self
 		// context.Self().Tell(&messages.FileContent{Content: data})
 

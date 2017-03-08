@@ -17,8 +17,8 @@ func (parent *coordinatorActor) Receive(context actor.Context) {
 		fmt.Println("Parent actor started now ...")
 		parent.fileReader = CreateFileReaderProps(context)
 	case *messages.FileModified:
-		// parent.fileReader.Tell(&messages.ReadFile{Filename: msg.Filename})
-		context.Request(parent.fileReader, &messages.ReadFile{Filename: msg.Filename})
+		parent.fileReader.Tell(&messages.ReadFile{Filename: msg.Filepath})
+		// context.Request(parent.fileReader, &messages.ReadFile{Filename: msg.Filepath})
 	case *messages.FileContent:
 		fmt.Println("File content in parents:", msg.Content)
 	}

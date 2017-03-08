@@ -34,6 +34,7 @@ func watchDirectory(ctx context.Context, dirToWatch string, pid *actor.PID) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	for {
 		select {
 		case event := <-watcher.Events:
@@ -41,7 +42,7 @@ func watchDirectory(ctx context.Context, dirToWatch string, pid *actor.PID) {
 			log.Println(event.Op)
 			if event.Op == fsnotify.Create {
 				log.Println("File created...")
-				pid.Tell(&messages.FileModified{Filename: event.Name})
+				pid.Tell(&messages.FileModified{Filepath: event.Name})
 			}
 
 		case err := <-watcher.Errors:
