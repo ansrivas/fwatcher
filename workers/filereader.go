@@ -23,12 +23,6 @@ func CreateFileReaderProps(context actor.Context) *actor.PID {
 	return context.Spawn(fileReadActorProps)
 }
 
-//CreateFileReaderPropsGlobal creates an actor in current actor system, not with a given context
-func CreateFileReaderPropsGlobal() *actor.PID {
-	fileReadActorProps := actor.FromProducer(newfileReadActor)
-	return actor.Spawn(fileReadActorProps)
-}
-
 func (state *fileReadActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 
@@ -36,9 +30,12 @@ func (state *fileReadActor) Receive(context actor.Context) {
 		state.p = NewProducer()
 	case *messages.ReadFile:
 
-		data := readFile(msg.Filename)
-		state.p.Produce(data)
-		context.Parent().Tell(&messages.PublishAck{})
+		// Need to be sure if this is an okay practice to run a coroutine in an actor
+		go func() {
+			data := readFile(msg.Filename)
+			state.p.Produce(data)
+			context.Parent().Tell(&messages.PublishAck{})
+		}()
 
 		// context.Sender().Tell(&messages.FileContent{Content: data})
 		//Testing inform self
