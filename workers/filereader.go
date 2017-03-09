@@ -10,16 +10,15 @@ import (
 )
 
 type fileReadActor struct {
-	p Producer
-}
-
-func newfileReadActor() actor.Actor {
-	return &fileReadActor{}
+	kproducer Producer
 }
 
 //CreateFileReaderProps create and spawn and child here
-func CreateFileReaderProps(context actor.Context) *actor.PID {
-	fileReadActorProps := actor.FromProducer(newfileReadActor)
+func CreateFileReaderProps(context actor.Context, bootstrapServers string) *actor.PID {
+
+	fileActor := &fileReadActor{kproducer: NewProducer(bootstrapServers)}
+
+	fileReadActorProps := actor.FromInstance(fileActor)
 	return context.Spawn(fileReadActorProps)
 }
 
@@ -27,7 +26,6 @@ func (state *fileReadActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 
 	case *actor.Started:
-		state.p = NewProducer()
 	case *messages.ReadFile:
 
 		// Need to be sure if this is an okay practice to run a coroutine in an actor
@@ -37,7 +35,7 @@ func (state *fileReadActor) Receive(context actor.Context) {
 				log.Println(err.Error())
 				return
 			}
-			state.p.Produce(data)
+			state.kproducer.Produce(data)
 			context.Parent().Tell(&messages.PublishAck{})
 		}()
 
