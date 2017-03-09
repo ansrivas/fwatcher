@@ -32,6 +32,11 @@ func (state *fileReadActor) Receive(context actor.Context) {
 
 		// Need to be sure if this is an okay practice to run a coroutine in an actor
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Println("goroutine paniced:", r)
+				}
+			}()
 			data := readFile(msg.Filename)
 			state.p.Produce(data)
 			context.Parent().Tell(&messages.PublishAck{})
@@ -50,9 +55,10 @@ func (state *fileReadActor) Receive(context actor.Context) {
 
 func readFile(filename string) string {
 	log.Println("Now reading file: ", filename)
+
 	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
-		panic(fmt.Sprintf("Unable to read file: %s", filename))
+		log.Panicln(fmt.Sprintf("Unable to read file: %s", filename))
 	}
 	return string(dat)
 }
