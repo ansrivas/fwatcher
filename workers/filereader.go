@@ -34,7 +34,7 @@ func (state *fileReadActor) Receive(context actor.Context) {
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					fmt.Println("goroutine paniced:", r)
+					log.Println("goroutine paniced: ", r)
 				}
 			}()
 			data := readFile(msg.Filename)
