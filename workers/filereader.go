@@ -36,7 +36,7 @@ func (state *fileReadActor) Receive(context actor.Context) {
 				return
 			}
 			state.kproducer.Produce(data)
-			context.Parent().Tell(&messages.PublishAck{})
+			context.Parent().Tell(&messages.PublishAck{Filename: msg.Filename})
 		}()
 
 		// context.Sender().Tell(&messages.FileContent{Content: data})
