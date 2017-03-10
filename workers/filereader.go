@@ -17,7 +17,6 @@ type fileReadActor struct {
 func CreateFileReaderProps(context actor.Context, bootstrapServers string) *actor.PID {
 
 	fileActor := &fileReadActor{kproducer: NewProducer(bootstrapServers)}
-
 	fileReadActorProps := actor.FromInstance(fileActor)
 	return context.Spawn(fileReadActorProps)
 }
@@ -25,9 +24,7 @@ func CreateFileReaderProps(context actor.Context, bootstrapServers string) *acto
 func (state *fileReadActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 
-	case *actor.Started:
 	case *messages.ReadFile:
-
 		// Need to be sure if this is an okay practice to run a coroutine in an actor
 		go func() {
 			data, err := readFile(msg.Filename)
