@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/fwatcher/messages"
+	"github.com/ansrivas/fwatcher/messages"
 )
 
 type fileReadActor struct {
