@@ -7,7 +7,7 @@ type FileModified struct{ Filepath string }
 type ReadFile struct{ Filename string }
 
 //PublishAck sends the ack about publishing to kafka
-type PublishAck struct{}
+type PublishAck struct{ Filename string }
 
 //Publisher publishes a given message to a kafka topic
 type Publisher struct{ Content string }

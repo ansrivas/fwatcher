@@ -13,15 +13,16 @@ type Producer struct {
 	kafkaProducer sarama.AsyncProducer
 }
 
-//NewProducer ...
-func NewProducer() Producer {
-	brokerList := strings.Split("localhost:9092", ",")
+// NewProducer creates a new Kafka producer
+// brokerList is a comma separated list of Kakfa brokers for eg. "localhost:9092,localhost:9093"
+func NewProducer(brokerList string) Producer {
+	brokers := strings.Split(brokerList, ",")
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForLocal       // Only wait for the leader to ack
 	config.Producer.Compression = sarama.CompressionSnappy   // Compress messages
 	config.Producer.Flush.Frequency = 500 * time.Millisecond // Flush batches every 500ms
 
-	producer, err := sarama.NewAsyncProducer(brokerList, config)
+	producer, err := sarama.NewAsyncProducer(brokers, config)
 	if err != nil {
 		log.Fatalln("Failed to start Sarama producer:", err)
 	}

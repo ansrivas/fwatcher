@@ -77,7 +77,7 @@ func main() {
 	supervisor := actor.NewExponentialBackoffStrategy(backoffWindow, initialBackoff)
 
 	props := actor.
-		FromProducer(workers.NewCoordinatorActor).
+		FromInstance(&workers.CoordinatorActor{BootStrapServers: hosts}).
 		WithSupervisor(supervisor)
 
 	pid := actor.Spawn(props)

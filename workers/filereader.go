@@ -10,36 +10,30 @@ import (
 )
 
 type fileReadActor struct {
-	p Producer
-}
-
-func newfileReadActor() actor.Actor {
-	return &fileReadActor{}
+	kproducer Producer
 }
 
 //CreateFileReaderProps create and spawn and child here
-func CreateFileReaderProps(context actor.Context) *actor.PID {
-	fileReadActorProps := actor.FromProducer(newfileReadActor)
+func CreateFileReaderProps(context actor.Context, bootstrapServers string) *actor.PID {
+
+	fileActor := &fileReadActor{kproducer: NewProducer(bootstrapServers)}
+	fileReadActorProps := actor.FromInstance(fileActor)
 	return context.Spawn(fileReadActorProps)
 }
 
 func (state *fileReadActor) Receive(context actor.Context) {
 	switch msg := context.Message().(type) {
 
-	case *actor.Started:
-		state.p = NewProducer()
 	case *messages.ReadFile:
-
 		// Need to be sure if this is an okay practice to run a coroutine in an actor
 		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					fmt.Println("goroutine paniced:", r)
-				}
-			}()
-			data := readFile(msg.Filename)
-			state.p.Produce(data)
-			context.Parent().Tell(&messages.PublishAck{})
+			data, err := readFile(msg.Filename)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+			state.kproducer.Produce(data)
+			context.Parent().Tell(&messages.PublishAck{Filename: msg.Filename})
 		}()
 
 		// context.Sender().Tell(&messages.FileContent{Content: data})
@@ -53,12 +47,11 @@ func (state *fileReadActor) Receive(context actor.Context) {
 	}
 }
 
-func readFile(filename string) string {
+func readFile(filename string) (string, error) {
 	log.Println("Now reading file: ", filename)
-
 	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Panicln(fmt.Sprintf("Unable to read file: %s", filename))
+		return "", fmt.Errorf("Unable to read file: %s", filename)
 	}
-	return string(dat)
+	return string(dat), nil
 }
