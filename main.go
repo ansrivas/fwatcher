@@ -11,9 +11,9 @@ import (
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/fsnotify/fsnotify"
-	conf "github.com/fwatcher/internal"
-	"github.com/fwatcher/messages"
-	"github.com/fwatcher/workers"
+	conf "github.com/ansrivas/fwatcher/internal"
+	"github.com/ansrivas/fwatcher/messages"
+	"github.com/ansrivas/fwatcher/workers"
 	flag "github.com/spf13/pflag"
 )
 
