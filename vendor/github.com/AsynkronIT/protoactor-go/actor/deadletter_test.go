@@ -8,20 +8,22 @@ import (
 )
 
 func TestDeadLetterAfterStop(t *testing.T) {
-	a := Spawn(FromProducer(NewBlackHoleActor))
+	actor := Spawn(FromProducer(NewBlackHoleActor))
 	done := false
 	sub := eventstream.Subscribe(func(msg interface{}) {
 		if deadLetter, ok := msg.(*DeadLetterEvent); ok {
-			if deadLetter.PID == a {
+			if deadLetter.PID == actor {
 				done = true
 			}
 		}
 	})
 	defer eventstream.Unsubscribe(sub)
 
-	a.GracefulStop()
+	actor.
+		StopFuture().
+		Wait()
 
-	a.Tell("hello")
+	actor.Tell("hello")
 
 	assert.True(t, done)
 }
@@ -30,7 +32,7 @@ func TestDeadLetterWatchRespondsWithTerminate(t *testing.T) {
 	//create an actor
 	pid := Spawn(FromProducer(NewBlackHoleActor))
 	//stop id
-	pid.GracefulStop()
+	pid.StopFuture().Wait()
 	f := NewFuture(testTimeout)
 	//send a watch message, from our future
 	pid.sendSystemMessage(&Watch{Watcher: f.PID()})

@@ -6,10 +6,6 @@ func (m messageHeader) Get(key string) string {
 	return m[key]
 }
 
-func (m messageHeader) Set(key string, value string) {
-	m[key] = value
-}
-
 func (m messageHeader) Keys() []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -23,7 +19,7 @@ type ReadonlyMessageHeader interface {
 	Keys() []string
 }
 
-type MessageEnvelope struct {
+type messageEnvelope struct {
 	Header  messageHeader
 	Message interface{}
 	Sender  *PID

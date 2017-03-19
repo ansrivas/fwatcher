@@ -17,5 +17,3 @@ type ActorFunc func(c Context)
 func (f ActorFunc) Receive(c Context) {
 	f(c)
 }
-
-type SenderFunc func(c Context, target *PID, envelope MessageEnvelope)
