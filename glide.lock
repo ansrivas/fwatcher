@@ -1,5 +1,5 @@
 hash: 23192ceeaf7a777c83918eb404e5c691be55c60ff954967b7f28ffed6860c80d
-updated: 2017-03-16T11:26:08.29122026+01:00
+updated: 2017-04-10T11:59:22.946287769+02:00
 imports:
 - name: github.com/AsynkronIT/goconsole
   version: bfa12eebf7161a928e20d11a627cc689e99e2e50
@@ -15,7 +15,7 @@ imports:
   - log
   - mailbox
 - name: github.com/couchbase/gocb
-  version: 6fca8af693ca20d33fd8427a09636362061a3b71
+  version: 875969843a5f324282f6801e149e558e7a065611
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -54,7 +54,7 @@ imports:
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/hashicorp/consul
-  version: 21f2d5ad0c02af6c4b32d8fd04f7c81e9b002d41
+  version: 402636ff2db998edef392ac6d59210d2170b3ebf
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
@@ -109,7 +109,7 @@ imports:
   subpackages:
   - assert
 - name: github.com/Workiva/go-datastructures
-  version: dd1dc71ac92298310606ac77d9519ddf1c6e2500
+  version: ceededf711cf8d8a61cac7003a0f947546da4763
   subpackages:
   - queue
 - name: golang.org/x/sys
@@ -122,7 +122,7 @@ imports:
   - transform
   - unicode/norm
 - name: google.golang.org/grpc
-  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+  version: 8050b9cbc271307e5a716a9d782803d09b0d6f2d
 - name: gopkg.in/Shopify/sarama.v1
   version: 0fb560e5f7fbcaee2f75e3c34174320709f69944
 - name: gopkg.in/yaml.v2

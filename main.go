@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/fsnotify/fsnotify"
 	conf "github.com/ansrivas/fwatcher/internal"
 	"github.com/ansrivas/fwatcher/messages"
 	"github.com/ansrivas/fwatcher/workers"
+	"github.com/fsnotify/fsnotify"
 	flag "github.com/spf13/pflag"
 )
 
@@ -86,6 +86,8 @@ func main() {
 
 	<-sigchan
 	cancel()
+	pid.Stop()
+
 	fmt.Printf("Terminating the program successfully\n")
 
 }
