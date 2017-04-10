@@ -9,10 +9,10 @@ func TestActorCanReplyOnStarting(t *testing.T) {
 	a := Spawn(FromFunc(func(context Context) {
 		switch context.Message().(type) {
 		case *Started:
-			context.Tell(future.PID(), EchoResponse{})
+			future.PID().Tell(EchoResponse{})
 		}
 	}))
-	a.GracefulStop()
+	defer a.StopFuture().Wait()
 	assertFutureSuccess(future, t)
 }
 
@@ -21,9 +21,9 @@ func TestActorCanReplyOnStopping(t *testing.T) {
 	a := Spawn(FromFunc(func(context Context) {
 		switch context.Message().(type) {
 		case *Stopping:
-			context.Tell(future.PID(), EchoResponse{})
+			future.PID().Tell(EchoResponse{})
 		}
 	}))
-	a.GracefulStop()
+	defer a.StopFuture().Wait()
 	assertFutureSuccess(future, t)
 }

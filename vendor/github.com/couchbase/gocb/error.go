@@ -2,8 +2,40 @@ package gocb
 
 import (
 	"errors"
-	"gopkg.in/couchbase/gocbcore.v2"
+	"gopkg.in/couchbase/gocbcore.v5"
+	"strings"
 )
+
+// MultiError encapsulates multiple errors that may be returned by one method.
+type MultiError struct {
+	Errors []error
+}
+
+func (e *MultiError) add(err error) {
+	if multiErr, ok := err.(*MultiError); ok {
+		e.Errors = append(e.Errors, multiErr.Errors...)
+	} else {
+		e.Errors = append(e.Errors, err)
+	}
+}
+
+func (e *MultiError) get() error {
+	if len(e.Errors) == 0 {
+		return nil
+	} else if len(e.Errors) == 1 {
+		return e.Errors[0]
+	} else {
+		return e
+	}
+}
+
+func (e *MultiError) Error() string {
+	var errors []string
+	for _, err := range e.Errors {
+		errors = append(errors, err.Error())
+	}
+	return strings.Join(errors, ", ")
+}
 
 type clientError struct {
 	message string
@@ -81,7 +113,7 @@ var (
 	ErrAuthError = gocbcore.ErrAuthError
 	// ErrRangeError occurs when an invalid range is specified.
 	ErrRangeError = gocbcore.ErrRangeError
-	// ErrRollback occurs when a server rollback has occured making the operation no longer valid.
+	// ErrRollback occurs when a server rollback has occurred making the operation no longer valid.
 	ErrRollback = gocbcore.ErrRollback
 	// ErrAccessError occurs when you do not have access to the specified resource.
 	ErrAccessError = gocbcore.ErrAccessError

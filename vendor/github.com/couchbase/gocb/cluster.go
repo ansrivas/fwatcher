@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"gopkg.in/couchbase/gocbcore.v2"
+	"gopkg.in/couchbase/gocbcore.v5"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -144,21 +144,19 @@ func specToHosts(spec connSpec) ([]string, []string, bool) {
 	return memdHosts, httpHosts, spec.Scheme.IsSSL()
 }
 
-func (c *Cluster) makeAgentConfig(bucket, password string, mt bool) (*gocbcore.AgentConfig, error) {
-	authFn := func(srv gocbcore.AuthClient, deadline time.Time) error {
-		// Build PLAIN auth data
-		userBuf := []byte(bucket)
-		passBuf := []byte(password)
-		authData := make([]byte, 1+len(userBuf)+1+len(passBuf))
-		authData[0] = 0
-		copy(authData[1:], userBuf)
-		authData[1+len(userBuf)] = 0
-		copy(authData[1+len(userBuf)+1:], passBuf)
+func (c *Cluster) makeAgentConfig(bucket, username, password string, mt bool) (*gocbcore.AgentConfig, error) {
+	authFn := func(client gocbcore.AuthClient, deadline time.Time) error {
+		if err := gocbcore.SaslAuthPlain(username, password, client, deadline); err != nil {
+			return err
+		}
 
-		// Execute PLAIN authentication
-		_, err := srv.ExecSaslAuth([]byte("PLAIN"), authData, deadline)
+		if bucket != username {
+			if err := client.ExecSelectBucket([]byte(bucket), deadline); err != nil {
+				return err
+			}
+		}
 
-		return err
+		return nil
 	}
 
 	memdHosts, httpHosts, isSslHosts := specToHosts(c.spec)
@@ -207,13 +205,16 @@ func (c *Cluster) Authenticate(auth Authenticator) error {
 }
 
 func (c *Cluster) openBucket(bucket, password string, mt bool) (*Bucket, error) {
+	username := bucket
 	if password == "" {
 		if c.auth != nil {
-			password = c.auth.bucketMemd(bucket)
+			userPass := c.auth.bucketMemd(bucket)
+			username = userPass.Username
+			password = userPass.Password
 		}
 	}
 
-	agentConfig, err := c.makeAgentConfig(bucket, password, mt)
+	agentConfig, err := c.makeAgentConfig(bucket, username, password, mt)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +257,7 @@ func (c *Cluster) closeBucket(bucket *Bucket) {
 // Manager returns a ClusterManager object for performing cluster management operations on this cluster.
 func (c *Cluster) Manager(username, password string) *ClusterManager {
 	userPass := userPassPair{username, password}
-	if username == "" || password == "" {
+	if username == "" && password == "" {
 		if c.auth != nil {
 			userPass = c.auth.clusterMgmt()
 		}
@@ -305,9 +306,18 @@ func (b *StreamingBucket) IoRouter() *gocbcore.Agent {
 	return b.client
 }
 
-// OpenBucket opens a new connection to the specified bucket for the purpose of streaming data.
+// OpenStreamingBucket opens a new connection to the specified bucket for the purpose of streaming data.
 func (c *Cluster) OpenStreamingBucket(streamName, bucket, password string) (*StreamingBucket, error) {
-	agentConfig, err := c.makeAgentConfig(bucket, password, false)
+	username := bucket
+	if password == "" {
+		if c.auth != nil {
+			userPass := c.auth.bucketMemd(bucket)
+			username = userPass.Username
+			password = userPass.Password
+		}
+	}
+
+	agentConfig, err := c.makeAgentConfig(bucket, username, password, false)
 	if err != nil {
 		return nil, err
 	}
