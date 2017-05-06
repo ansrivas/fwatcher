@@ -47,6 +47,9 @@ func watchDirectory(ctx context.Context, dirToWatch string, pid *actor.PID) {
 
 		case err := <-watcher.Errors:
 			log.Println("error:", err)
+			
+		case <-ctx.Done():
+				return
 
 		}
 	}
