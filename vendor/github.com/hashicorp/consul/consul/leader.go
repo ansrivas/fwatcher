@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/armon/go-metrics"
@@ -29,18 +30,29 @@ const (
 // as the leader in the Raft cluster. There is some work the leader is
 // expected to do, so we must react to changes
 func (s *Server) monitorLeadership() {
-	leaderCh := s.raft.LeaderCh()
+	// We use the notify channel we configured Raft with, NOT Raft's
+	// leaderCh, which is only notified best-effort. Doing this ensures
+	// that we get all notifications in order, which is required for
+	// cleanup and to ensure we never run multiple leader loops.
+	leaderCh := s.leaderCh
+
+	var wg sync.WaitGroup
 	var stopCh chan struct{}
 	for {
 		select {
 		case isLeader := <-leaderCh:
 			if isLeader {
 				stopCh = make(chan struct{})
-				go s.leaderLoop(stopCh)
+				wg.Add(1)
+				go func() {
+					s.leaderLoop(stopCh)
+					wg.Done()
+				}()
 				s.logger.Printf("[INFO] consul: cluster leadership acquired")
 			} else if stopCh != nil {
 				close(stopCh)
 				stopCh = nil
+				wg.Wait()
 				s.logger.Printf("[INFO] consul: cluster leadership lost")
 			}
 		case <-s.shutdownCh:
@@ -153,11 +165,8 @@ func (s *Server) establishLeadership() error {
 		return err
 	}
 
-	// Setup autopilot config if we are the leader and need to
-	if err := s.initializeAutopilot(); err != nil {
-		s.logger.Printf("[ERR] consul: Autopilot initialization failed: %v", err)
-		return err
-	}
+	// Setup autopilot config if we need to
+	s.getOrCreateAutopilotConfig()
 
 	s.startAutopilot()
 
@@ -249,27 +258,31 @@ func (s *Server) initializeACL() error {
 	return nil
 }
 
-// initializeAutopilot is used to setup the autopilot config if we are
-// the leader and need to do this
-func (s *Server) initializeAutopilot() error {
-	// Bail if the config has already been initialized
+// getOrCreateAutopilotConfig is used to get the autopilot config, initializing it if necessary
+func (s *Server) getOrCreateAutopilotConfig() (*structs.AutopilotConfig, bool) {
 	state := s.fsm.State()
 	_, config, err := state.AutopilotConfig()
 	if err != nil {
-		return fmt.Errorf("failed to get autopilot config: %v", err)
+		s.logger.Printf("[ERR] autopilot: failed to get config: %v", err)
+		return nil, false
 	}
 	if config != nil {
-		return nil
+		return config, true
 	}
 
-	req := structs.AutopilotSetConfigRequest{
-		Config: *s.config.AutopilotConfig,
+	if !ServersMeetMinimumVersion(s.LANMembers(), minAutopilotVersion) {
+		s.logger.Printf("[WARN] autopilot: can't initialize until all servers are >= %s", minAutopilotVersion.String())
+		return nil, false
 	}
+
+	config = s.config.AutopilotConfig
+	req := structs.AutopilotSetConfigRequest{Config: *config}
 	if _, err = s.raftApply(structs.AutopilotRequestType, req); err != nil {
-		return fmt.Errorf("failed to initialize autopilot config")
+		s.logger.Printf("[ERR] autopilot: failed to initialize config: %v", err)
+		return nil, false
 	}
 
-	return nil
+	return config, true
 }
 
 // reconcile is used to reconcile the differences between Serf

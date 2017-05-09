@@ -61,7 +61,8 @@ Prior to Autopilot, it would take 72 hours for dead servers to be automatically 
 or operators had to script a `consul force-leave`. If another server failure occurred,
 it could jeopardize the quorum, even if the failed Consul server had been automatically
 replaced. Autopilot helps prevent these kinds of outages by quickly removing failed
-servers as soon as a replacement Consul server comes online.
+servers as soon as a replacement Consul server comes online. When servers are removed 
+by the cleanup process they will enter the "left" state.
 
 This option can be disabled by running `consul operator autopilot set-config`
 with the `-cleanup-dead-servers=false` option.
@@ -130,7 +131,7 @@ setting.
 ---
 
 ~> The following Autopilot features are available only in
-   [Consul Enterprise](https://www.hashicorp.com/consul.html) version 0.8.0 and later.
+   [Consul Enterprise](https://www.hashicorp.com/products/consul/) version 0.8.0 and later.
 
 ## Server Read Scaling
 
