@@ -2,7 +2,7 @@ package gocb
 
 import (
 	"encoding/json"
-	"gopkg.in/couchbase/gocbcore.v5"
+	"gopkg.in/couchbase/gocbcore.v6"
 	"log"
 )
 
@@ -40,6 +40,12 @@ func (frag *DocumentFragment) ContentByIndex(idx int, valuePtr interface{}) erro
 	if valuePtr == nil {
 		return nil
 	}
+
+	if valuePtr, ok := valuePtr.(*[]byte); ok {
+		*valuePtr = res.data
+		return nil
+	}
+
 	return json.Unmarshal(res.data, valuePtr)
 }
 
@@ -78,6 +84,15 @@ func (set *LookupInBuilder) Execute() (*DocumentFragment, error) {
 //
 // Experimental: This API is subject to change at any time.
 func (set *LookupInBuilder) GetEx(path string, flags SubdocFlag) *LookupInBuilder {
+	if path == "" {
+		op := gocbcore.SubDocOp{
+			Op:    gocbcore.SubDocOpGetDoc,
+			Flags: gocbcore.SubdocFlag(flags),
+		}
+		set.ops = append(set.ops, op)
+		return set
+	}
+
 	op := gocbcore.SubDocOp{
 		Op:    gocbcore.SubDocOpGet,
 		Path:  path,
@@ -181,7 +196,15 @@ func (set *MutateInBuilder) Execute() (*DocumentFragment, error) {
 	return set.bucket.mutateIn(set)
 }
 
-func (set *MutateInBuilder) marshalJson(value interface{}) []byte {
+func (set *MutateInBuilder) marshalValue(value interface{}) []byte {
+	if value, ok := value.([]byte); ok {
+		return value
+	}
+
+	if value, ok := value.(*[]byte); ok {
+		return *value
+	}
+
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		set.errs.add(err)
@@ -194,11 +217,21 @@ func (set *MutateInBuilder) marshalJson(value interface{}) []byte {
 //
 // Experimental: This API is subject to change at any time.
 func (set *MutateInBuilder) InsertEx(path string, value interface{}, flags SubdocFlag) *MutateInBuilder {
+	if path == "" {
+		op := gocbcore.SubDocOp{
+			Op:    gocbcore.SubDocOpAddDoc,
+			Flags: gocbcore.SubdocFlag(flags),
+			Value: set.marshalValue(value),
+		}
+		set.ops = append(set.ops, op)
+		return set
+	}
+
 	op := gocbcore.SubDocOp{
 		Op:    gocbcore.SubDocOpDictAdd,
 		Path:  path,
 		Flags: gocbcore.SubdocFlag(flags),
-		Value: set.marshalJson(value),
+		Value: set.marshalValue(value),
 	}
 	set.ops = append(set.ops, op)
 	return set
@@ -218,11 +251,21 @@ func (set *MutateInBuilder) Insert(path string, value interface{}, createParents
 //
 // Experimental: This API is subject to change at any time.
 func (set *MutateInBuilder) UpsertEx(path string, value interface{}, flags SubdocFlag) *MutateInBuilder {
+	if path == "" {
+		op := gocbcore.SubDocOp{
+			Op:    gocbcore.SubDocOpSetDoc,
+			Flags: gocbcore.SubdocFlag(flags),
+			Value: set.marshalValue(value),
+		}
+		set.ops = append(set.ops, op)
+		return set
+	}
+
 	op := gocbcore.SubDocOp{
 		Op:    gocbcore.SubDocOpDictSet,
 		Path:  path,
 		Flags: gocbcore.SubdocFlag(flags),
-		Value: set.marshalJson(value),
+		Value: set.marshalValue(value),
 	}
 	set.ops = append(set.ops, op)
 	return set
@@ -246,7 +289,7 @@ func (set *MutateInBuilder) ReplaceEx(path string, value interface{}, flags Subd
 		Op:    gocbcore.SubDocOpReplace,
 		Path:  path,
 		Flags: gocbcore.SubdocFlag(flags),
-		Value: set.marshalJson(value),
+		Value: set.marshalValue(value),
 	}
 	set.ops = append(set.ops, op)
 	return set
@@ -294,7 +337,7 @@ func (set *MutateInBuilder) Remove(path string) *MutateInBuilder {
 //
 // Experimental: This API is subject to change at any time.
 func (set *MutateInBuilder) ArrayPrependEx(path string, value interface{}, flags SubdocFlag) *MutateInBuilder {
-	return set.arrayPrependValue(path, set.marshalJson(value), flags)
+	return set.arrayPrependValue(path, set.marshalValue(value), flags)
 }
 
 // ArrayPrepend adds an element to the beginning (i.e. left) of an array
@@ -322,7 +365,7 @@ func (set *MutateInBuilder) arrayPrependValue(path string, bytes []byte, flags S
 //
 // Experimental: This API is subject to change at any time.
 func (set *MutateInBuilder) ArrayAppendEx(path string, value interface{}, flags SubdocFlag) *MutateInBuilder {
-	return set.arrayAppendValue(path, set.marshalJson(value), flags)
+	return set.arrayAppendValue(path, set.marshalValue(value), flags)
 }
 
 // ArrayAppend adds an element to the end (i.e. right) of an array
@@ -350,7 +393,7 @@ func (set *MutateInBuilder) arrayAppendValue(path string, bytes []byte, flags Su
 //
 // Experimental: This API is subject to change at any time.
 func (set *MutateInBuilder) ArrayInsertEx(path string, value interface{}, flags SubdocFlag) *MutateInBuilder {
-	return set.arrayInsertValue(path, set.marshalJson(value), flags)
+	return set.arrayInsertValue(path, set.marshalValue(value), flags)
 }
 
 // ArrayInsert inserts an element at a given position within an array. The position should be
@@ -437,7 +480,7 @@ func (set *MutateInBuilder) ArrayAddUniqueEx(path string, value interface{}, fla
 		Op:    gocbcore.SubDocOpArrayAddUnique,
 		Path:  path,
 		Flags: gocbcore.SubdocFlag(flags),
-		Value: set.marshalJson(value),
+		Value: set.marshalValue(value),
 	}
 	set.ops = append(set.ops, op)
 	return set
@@ -461,7 +504,7 @@ func (set *MutateInBuilder) CounterEx(path string, delta int64, flags SubdocFlag
 		Op:    gocbcore.SubDocOpCounter,
 		Path:  path,
 		Flags: gocbcore.SubdocFlag(flags),
-		Value: set.marshalJson(delta),
+		Value: set.marshalValue(delta),
 	}
 	set.ops = append(set.ops, op)
 	return set

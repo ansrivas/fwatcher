@@ -8,52 +8,35 @@ import (
 )
 
 type localContext struct {
-	message            interface{}
-	parent             *PID
-	self               *PID
-	actor              Actor
-	supervisor         SupervisorStrategy
-	producer           Producer
-	inboundMiddleware  ActorFunc
-	outboundMiddleware SenderFunc
-	behavior           behaviorStack
-	receive            ActorFunc
-	children           PIDSet
-	watchers           PIDSet
-	watching           PIDSet
-	stash              *linkedliststack.Stack
-	stopping           bool
-	restarting         bool
-	receiveTimeout     time.Duration
-	t                  *time.Timer
-	restartStats       *RestartStatistics
+	message        interface{}
+	parent         *PID
+	self           *PID
+	actor          Actor
+	supervisor     SupervisorStrategy
+	producer       Producer
+	middleware     ActorFunc
+	behavior       behaviorStack
+	receive        ActorFunc
+	children       PIDSet
+	watchers       PIDSet
+	watching       PIDSet
+	stash          *linkedliststack.Stack
+	stopping       bool
+	restarting     bool
+	receiveTimeout time.Duration
+	t              *time.Timer
+	restartStats   *RestartStatistics
 }
 
-func newLocalContext(producer Producer, supervisor SupervisorStrategy, inboundMiddleware []InboundMiddleware, outboundMiddleware []OutboundMiddleware, parent *PID) *localContext {
-	this := &localContext{
+func newLocalContext(producer Producer, supervisor SupervisorStrategy, middleware ActorFunc, parent *PID) *localContext {
+	cell := &localContext{
 		parent:     parent,
 		producer:   producer,
 		supervisor: supervisor,
+		middleware: middleware,
 	}
-
-	// Construct the inbound middleware chain with the final receiver at the end
-	if inboundMiddleware != nil {
-		this.inboundMiddleware = makeInboundMiddlewareChain(inboundMiddleware, func(ctx Context) {
-			if _, ok := this.message.(*PoisonPill); ok {
-				this.self.Stop()
-			} else {
-				this.receive(ctx)
-			}
-		})
-	}
-
-	// Construct the outbound middleware chain with the final sender at the end
-	this.outboundMiddleware = makeOutboundMiddlewareChain(outboundMiddleware, func(_ Context, target *PID, envelope MessageEnvelope) {
-		target.ref().SendUserMessage(target, envelope.Message, envelope.Sender)
-	})
-
-	this.incarnateActor()
-	return this
+	cell.incarnateActor()
+	return cell
 }
 
 func (ctx *localContext) Actor() Actor {
@@ -61,7 +44,7 @@ func (ctx *localContext) Actor() Actor {
 }
 
 func (ctx *localContext) Message() interface{} {
-	envelope, ok := ctx.message.(*MessageEnvelope)
+	envelope, ok := ctx.message.(*messageEnvelope)
 	if ok {
 		return envelope.Message
 	}
@@ -69,7 +52,7 @@ func (ctx *localContext) Message() interface{} {
 }
 
 func (ctx *localContext) Sender() *PID {
-	envelope, ok := ctx.message.(*MessageEnvelope)
+	envelope, ok := ctx.message.(*messageEnvelope)
 	if ok {
 		return envelope.Sender
 	}
@@ -77,7 +60,7 @@ func (ctx *localContext) Sender() *PID {
 }
 
 func (ctx *localContext) MessageHeader() ReadonlyMessageHeader {
-	envelope, ok := ctx.message.(*MessageEnvelope)
+	envelope, ok := ctx.message.(*messageEnvelope)
 	if ok {
 		return envelope.Header
 	}
@@ -85,41 +68,11 @@ func (ctx *localContext) MessageHeader() ReadonlyMessageHeader {
 }
 
 func (ctx *localContext) Tell(pid *PID, message interface{}) {
-	if ctx.outboundMiddleware != nil {
-		ctx.outboundMiddleware(ctx, pid, MessageEnvelope{
-			Header:  emptyMessageHeader,
-			Message: message,
-			Sender:  nil,
-		})
-	} else {
-		pid.ref().SendUserMessage(pid, message, nil)
-	}
+	pid.ref().SendUserMessage(pid, message, nil)
 }
 
 func (ctx *localContext) Request(pid *PID, message interface{}) {
-	if ctx.outboundMiddleware != nil {
-		ctx.outboundMiddleware(ctx, pid, MessageEnvelope{
-			Header:  emptyMessageHeader,
-			Message: message,
-			Sender:  ctx.Self(),
-		})
-	} else {
-		pid.ref().SendUserMessage(pid, message, ctx.Self())
-	}
-}
-
-func (ctx *localContext) RequestFuture(pid *PID, message interface{}, timeout time.Duration) *Future {
-	future := NewFuture(timeout)
-	if ctx.outboundMiddleware != nil {
-		ctx.outboundMiddleware(ctx, pid, MessageEnvelope{
-			Header:  emptyMessageHeader,
-			Message: message,
-			Sender:  future.PID(),
-		})
-	} else {
-		pid.ref().SendUserMessage(pid, message, future.PID())
-	}
-	return future
+	pid.ref().SendUserMessage(pid, message, ctx.Self())
 }
 
 func (ctx *localContext) Stash() {
@@ -138,7 +91,7 @@ func (ctx *localContext) cancelTimer() {
 }
 
 func (ctx *localContext) receiveTimeoutHandler() {
-	ctx.self.Tell(receiveTimeoutMessage)
+	ctx.self.Request(receiveTimeoutMessage, nil)
 }
 
 func (ctx *localContext) SetReceiveTimeout(d time.Duration) {
@@ -229,11 +182,21 @@ func (ctx *localContext) InvokeUserMessage(md interface{}) {
 	}
 }
 
+// localContextReceiver is used when middleware chain is required
+func localContextReceiver(ctx Context) {
+	a := ctx.(*localContext)
+	if _, ok := a.message.(*PoisonPill); ok {
+		a.self.Stop()
+	} else {
+		a.receive(ctx)
+	}
+}
+
 func (ctx *localContext) processMessage(m interface{}) {
 	ctx.message = m
 
-	if ctx.inboundMiddleware != nil {
-		ctx.inboundMiddleware(ctx)
+	if ctx.middleware != nil {
+		ctx.middleware(ctx)
 	} else {
 		if _, ok := m.(*PoisonPill); ok {
 			ctx.self.Stop()
@@ -397,13 +360,7 @@ func (ctx *localContext) Unwatch(who *PID) {
 }
 
 func (ctx *localContext) Respond(response interface{}) {
-	// If the message is addressed to nil forward it to the dead letter channel
-	if ctx.Sender() == nil {
-		deadLetter.SendUserMessage(nil, response, ctx.Self())
-		return
-	}
-
-	ctx.Tell(ctx.Sender(), response)
+	ctx.Sender().Tell(response)
 }
 
 func (ctx *localContext) Spawn(props *Props) *PID {
@@ -441,13 +398,12 @@ func (ctx *localContext) AwaitFuture(f *Future, cont func(res interface{}, err e
 		cont(f.result, f.err)
 	}
 
-	message := ctx.message
 	//invoke the callback when the future completes
 	f.continueWith(func(res interface{}, err error) {
 		//send the wrapped callaback as a continuation message to self
 		ctx.self.sendSystemMessage(&continuation{
 			f:       wrapper,
-			message: message,
+			message: ctx.message,
 		})
 	})
 }

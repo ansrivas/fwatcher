@@ -18,7 +18,7 @@ func Example() {
 	pid := actor.Spawn(props)
 
 	pid.Tell("Hello World")
-	pid.GracefulStop() // wait for the actor to stop
+	pid.StopFuture().Wait() // wait for the actor to stop
 
 	// Output: Hello World
 }
@@ -44,7 +44,7 @@ func Example_synchronous() {
 		case *actor.Started:
 			// send a PING to the callee, and specify the response
 			// is sent to Self, which is this actor's PID
-			c.Request(callee, "PING")
+			callee.Request("PING", c.Self())
 
 		case string:
 			fmt.Println(msg) // PONG
@@ -53,8 +53,8 @@ func Example_synchronous() {
 	}))
 
 	wg.Wait()
-	callee.GracefulStop()
-	caller.GracefulStop()
+	callee.StopFuture().Wait()
+	caller.StopFuture().Wait()
 
 	// Output:
 	// PING

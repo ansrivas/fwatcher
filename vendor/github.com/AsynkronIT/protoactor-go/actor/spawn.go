@@ -37,7 +37,7 @@ func spawn(id string, props *Props, parent *PID) (*PID, error) {
 		return pid, ErrNameExists
 	}
 
-	cell := newLocalContext(props.actorProducer, props.getSupervisor(), props.inboundMiddleware, props.outboundMiddleware, parent)
+	cell := newLocalContext(props.actorProducer, props.getSupervisor(), props.middlewareChain, parent)
 	mb := props.produceMailbox(cell, props.getDispatcher())
 	lp.mailbox = mb
 	var ref Process = lp

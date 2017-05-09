@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"crypto/sha512"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -629,6 +630,11 @@ func (a *Agent) makeRandomID() (string, error) {
 // high for us if this changes, so we will persist it either way. This will let
 // gopsutil change implementations without affecting in-place upgrades of nodes.
 func (a *Agent) makeNodeID() (string, error) {
+	// If they've disabled host-based IDs then just make a random one.
+	if a.config.DisableHostNodeID {
+		return a.makeRandomID()
+	}
+
 	// Try to get a stable ID associated with the host itself.
 	info, err := host.Info()
 	if err != nil {
@@ -644,6 +650,17 @@ func (a *Agent) makeNodeID() (string, error) {
 			id, err)
 		return a.makeRandomID()
 	}
+
+	// Hash the input to make it well distributed. The reported Host UUID may be
+	// similar across nodes if they are on a cloud provider or on motherboards
+	// created from the same batch.
+	buf := sha512.Sum512([]byte(id))
+	id = fmt.Sprintf("%08x-%04x-%04x-%04x-%12x",
+		buf[0:4],
+		buf[4:6],
+		buf[6:8],
+		buf[8:10],
+		buf[10:16])
 
 	a.logger.Printf("[DEBUG] Using unique ID %q from host as node ID", id)
 	return id, nil

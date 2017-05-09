@@ -1,5 +1,5 @@
 hash: 23192ceeaf7a777c83918eb404e5c691be55c60ff954967b7f28ffed6860c80d
-updated: 2017-04-10T11:59:22.946287769+02:00
+updated: 2017-05-09T15:09:16.253647205+02:00
 imports:
 - name: github.com/AsynkronIT/goconsole
   version: bfa12eebf7161a928e20d11a627cc689e99e2e50
@@ -15,7 +15,7 @@ imports:
   - log
   - mailbox
 - name: github.com/couchbase/gocb
-  version: 875969843a5f324282f6801e149e558e7a065611
+  version: f6356f3ae8be06a2a579541b13705fac80607422
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -54,7 +54,7 @@ imports:
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/hashicorp/consul
-  version: 402636ff2db998edef392ac6d59210d2170b3ebf
+  version: e9ca44d0a1757ac9aecc6785904a701936c10e4a
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
@@ -68,8 +68,6 @@ imports:
   - json/parser
   - json/scanner
   - json/token
-- name: github.com/klauspost/crc32
-  version: 1bab8b35b6bb565f92cbc97939610af9369f942a
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mitchellh/mapstructure
@@ -109,7 +107,7 @@ imports:
   subpackages:
   - assert
 - name: github.com/Workiva/go-datastructures
-  version: ceededf711cf8d8a61cac7003a0f947546da4763
+  version: 01ff43b05e5593e6e41f5988797126402611e2d7
   subpackages:
   - queue
 - name: golang.org/x/sys
@@ -122,9 +120,9 @@ imports:
   - transform
   - unicode/norm
 - name: google.golang.org/grpc
-  version: 8050b9cbc271307e5a716a9d782803d09b0d6f2d
+  version: d2e1b51f33ff8c5e4a15560ff049d200e83726c5
 - name: gopkg.in/Shopify/sarama.v1
-  version: 0fb560e5f7fbcaee2f75e3c34174320709f69944
+  version: c01858abb625b73a3af51d0798e4ad42c8147093
 - name: gopkg.in/yaml.v2
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:

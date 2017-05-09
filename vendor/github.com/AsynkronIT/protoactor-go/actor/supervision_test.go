@@ -15,7 +15,7 @@ func (a *actorWithSupervisor) Receive(ctx Context) {
 	switch ctx.Message().(type) {
 	case *Started:
 		child := ctx.Spawn(FromInstance(&failingChildActor{}))
-		ctx.Tell(child, "Fail!")
+		child.Tell("Fail!")
 	}
 }
 
