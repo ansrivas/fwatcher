@@ -25,12 +25,12 @@ app_help: build
 
 .PHONY: test_run
 test_run:      ## Run the application in a test mode
-test_run:	test_recreate_env build	
+test_run:	_recreate_env build
 	@echo "Running now.."
 	@./fwatcher --config ./config.yaml
 
-test_recreate_env:        ## Recreate the docker environment and create a default topic.
-test_recreate_env:	clean
+_recreate_env: ## Recreate the docker environment and create a default topic.
+_recreate_env:	clean
 	docker-compose up -d && \
 	chmod +x ./wait-for-it.sh && \
 	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic test_produce_consume_with_partition_key_topic
