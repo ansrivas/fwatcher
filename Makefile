@@ -8,14 +8,14 @@ test:          ## Run all the tests
 test:
 	./test.sh
 
-clean:         ## Clean the application
+clean:         ## Clean the application and remove all the docker containers.
 	@go clean -i ./...
 	@rm -rf ./fwatcher
+	@docker-compose down -v
 
 build:         ## Build the application
 build:	clean
 	@go build github.com/ansrivas/fwatcher
-
 
 .PHONY : app_help
 app_help:      ## Display flags accepted by the application
@@ -25,14 +25,15 @@ app_help: build
 
 .PHONY: test_run
 test_run:      ## Run the application in a test mode
-test_run:	clean build
+test_run:	test_recreate_env build	
 	@echo "Running now.."
 	@./fwatcher --config ./config.yaml
 
-.PHONY: remove
-remove:        ## Remove running docker containers and remove the volumes
-remove:	clean
-	docker-compose down -v
+test_recreate_env:        ## Recreate the docker environment and create a default topic.
+test_recreate_env:	clean
+	docker-compose up -d && \
+	chmod +x ./wait-for-it.sh && \
+	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic test_produce_consume_with_partition_key_topic
 
 .PHONY: dock_run_fg
 dock_run_fg:   ## Run docker containers, foreground.

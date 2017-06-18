@@ -1,4 +1,4 @@
 kafka:
-    hosts: "localhost:9092"
+    hosts: "localhost:19092"
 app:
     dir: ./
