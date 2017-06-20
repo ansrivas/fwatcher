@@ -30,10 +30,10 @@ func NewProducer(brokerList string) Producer {
 }
 
 //Produce produces a test message
-func (p Producer) Produce(value string) {
+func (p Producer) Produce(value []byte) {
 	p.kafkaProducer.Input() <- &sarama.ProducerMessage{
 		Topic: "access_log",
 		Key:   sarama.StringEncoder("my_key"),
-		Value: sarama.StringEncoder(value),
+		Value: sarama.ByteEncoder(value),
 	}
 }

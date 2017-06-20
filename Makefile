@@ -33,7 +33,7 @@ _recreate_env: ## Recreate the docker environment and create a default topic.
 _recreate_env:	clean
 	docker-compose up -d && \
 	chmod +x ./wait-for-it.sh && \
-	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic test_produce_consume_with_partition_key_topic
+	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic access_log
 
 .PHONY: dock_run_fg
 dock_run_fg:   ## Run docker containers, foreground.

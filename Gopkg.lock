@@ -63,6 +63,12 @@
   revision = "630949a3c5fa3c613328e1b8256052cbc2327c9b"
 
 [[projects]]
+  name = "github.com/karrick/goavro"
+  packages = ["."]
+  revision = "7266c9d32b3d0f05950d7aeaa47b506066978a1f"
+  version = "v0.3.1"
+
+[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "b3b15ef068fd0b17ddf408a23669f20811d194d2"
@@ -168,6 +174,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0f0c7fd0753633d8dee2ecf9f8723e16242d1d28f49410e0d4cffb8945cf45bf"
+  inputs-digest = "8bbbdefacdc11249caf41b4fac4ff14bbd377733b7cb6065a9a4f70c5dce5d2c"
   solver-name = "gps-cdcl"
   solver-version = 1
