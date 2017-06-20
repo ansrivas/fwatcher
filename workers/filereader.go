@@ -25,7 +25,7 @@ func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context a
 		log.Println(err.Error())
 		return
 	}
-	codec, err := goavro.NewCodec(schema)
+	codec, err := goavro.NewCodec(avro_schema)
 	if err != nil {
 		fmt.Println("Decoding error", err)
 	}
