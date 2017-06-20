@@ -1,6 +1,6 @@
 package workers
 
-const avro_schema = `{
+const avroSchema = `{
   "type" : "record",
   "name" : "test_schema",
   "namespace" : "com.srivastava.avro",
