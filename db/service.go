@@ -1,33 +1,45 @@
 package db
 
 import (
+	"database/sql"
+	"fmt"
+	// Postgres driver to implement the postgres funcs
+	_ "github.com/lib/pq"
+	"log"
 	"time"
-
-	"upper.io/db.v3/postgresql"
 )
 
-var settings = postgresql.ConnectionURL{
-	Host:     "localhost",
-	Database: "testdb",
-	User:     "testuser",
-	Password: "testpassword123",
-}
+const (
+	Host     = "localhost"
+	Database = "testdb"
+	User     = "testuser"
+	Password = "testpassword123"
+)
 
 type Status struct {
-	ID               string    `db:"id,omitempty"`
-	Filename         string    `db:"filename"`
-	CurrentStatus    string    `db:"current_status"`
-	ErrorString      string    `db:"error_string"`
-	TimeOfProcessing time.Time `db:"time_of_processing"`
+	ID             string    `db:"id,omitempty"`
+	Filename       string    `db:"filename"`
+	CurrentStatus  string    `db:"current_status"`
+	ErrorString    string    `db:"error_string"`
+	ProcessingTime time.Time `db:"time_of_processing"`
 }
 
+// NewDb setups a new database connection and WILL return a dbconn object
 func NewDb() {
-	dbconn, err := postgresql.Open(settings)
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+		User, Password, Database)
+	db, err := sql.Open("postgres", dbinfo)
 	if err != nil {
 		panic("failed to connect database")
 	}
-	defer dbconn.Close()
+	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Error: Could not establish a connection with the database")
+	}
 
-	status := dbconn.Collection("fwatcher.status")
-	status.Insert(Status{Filename: "eon", CurrentStatus: "processing", ErrorString: "No error", TimeOfProcessing: time.Now()})
+	var lastInsertID int
+	err = db.QueryRow("INSERT INTO fwatcher.status( filename,current_status,error_string,time_of_processing) VALUES($1,$2,$3,$4) returning id;", "eon", "processing", "No error",
+		time.Now()).Scan(&lastInsertID)
+
 }

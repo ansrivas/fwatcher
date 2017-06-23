@@ -28,3 +28,7 @@ dock_run_bg:    Run docker containers, background.
 build_docker:   Build docker containers
 sys_info:       Show docker containers info
 ```
+
+## Run make migrate:
+
+`make migrate command=up` or `make migrate command=down`
