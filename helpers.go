@@ -50,6 +50,8 @@ func watchDirectory(ctx context.Context, dirToWatch string, allowedExt []string,
 		case err := <-watcher.Errors:
 			log.Println("error:", err)
 
+		case <-ctx.Done():
+			return
 		}
 	}
 }
