@@ -1,27 +1,44 @@
 version: '2'
 services:
   zk4kafka-01-s:
-    image: confluentinc/cp-zookeeper:3.1.0
+    image: confluentinc/cp-zookeeper:latest
     container_name: zk4kafka-01-c
     environment:
       ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 33472
+      ZOOKEEPER_CLIENT_PORT: 22181
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: localhost:33477:33478
     restart: always
     network_mode: host
+    volumes:
+      - data-zk4kafka-01-v:/var/lib/zookeeper/data
+      - log-zk4kafka-01-v:/var/lib/zookeeper/log
   kafka-01-s:
-    image: confluentinc/cp-kafka:3.1.0
+    image: confluentinc/cp-kafka:latest
     container_name: kafka-01-c
     depends_on:
       - zk4kafka-01-s
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: localhost:33472
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ZOOKEEPER_CONNECT: localhost:22181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAKFA_COMPRESSION_TYPE: 'snappy'
     restart: always
     network_mode: host
+    volumes:
+    - data-kafka-01-v:/var/lib/kafka/data
+  fwatcher-postgres-s:
+    image: postgres:9.6
+    container_name: fwatcher-postgres-c
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+volumes:
+    data-zk4kafka-01-v:
+    log-zk4kafka-01-v:
+    data-kafka-01-v:
