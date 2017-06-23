@@ -56,3 +56,8 @@ dock_run_bg:
 build_docker:  ## Build docker containers
 build_docker:
 	docker-compose build
+
+.PHONY: sys_info
+sys_info:      ## Show docker containers info
+sys_info:
+	docker system df -v

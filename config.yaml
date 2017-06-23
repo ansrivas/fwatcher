@@ -2,3 +2,6 @@ kafka:
     hosts: "localhost:19092"
 app:
     dir: ./
+    filetypes:
+      - .csv
+      - .txt
