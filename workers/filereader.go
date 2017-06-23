@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
@@ -14,6 +13,7 @@ import (
 
 type fileReadActor struct {
 	kproducer Producer
+	avroCodec *goavro.Codec
 }
 
 // publishFileToKafka publishes a file to Kafka in a avro-serialized manner.
@@ -25,28 +25,32 @@ func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context a
 		log.Println(err.Error())
 		return
 	}
-	codec, err := goavro.NewCodec(avroSchema)
-	if err != nil {
-		fmt.Println("Decoding error", err)
-	}
+
 	mymap := make(map[string]interface{})
 	for num, line := range strings.Split(string(data), "\n") {
 		row := strings.Split(line, ";")
 		if len(row) != 3 {
-			log.Printf("Error: Unreadable row from file %s in  lineno %d, line %s", msg.Filename, num, line)
+			log.Printf("Error: Unreadable row from file %s in  lineno %d, line %s", msg.Filename, num+1, line)
 			continue
 		}
-		mymap["timestamp"] = row[0]
-		mymap["datapoint"] = row[1]
 
-		value, err := strconv.ParseFloat(strings.TrimSpace(row[2]), 32)
+		utcValue, err := convertToUTC(row[0])
 		if err != nil {
-			log.Printf("Illegal value format %v", row[2])
+			log.Printf("Error parsing the timestamp: file %s in  lineno %d, line %s", msg.Filename, num+1, line)
 			continue
 		}
-		mymap["value"] = value
+		datapointValue, err := toFloat(row[2])
+		if err != nil {
+			log.Printf("Illegal value format file %s in  lineno %d, line %s", msg.Filename, num+1, line)
+			continue
+		}
 
-		textual, err := codec.BinaryFromNative(nil, mymap)
+		mymap["timestamp"] = utcValue
+		mymap["datapoint"] = row[1]
+		mymap["value"] = datapointValue
+
+		// textual, err := state.avroCodec.TextualFromNative(nil, mymap)
+		textual, err := state.avroCodec.BinaryFromNative(nil, mymap)
 		if err != nil {
 			fmt.Println("Conversion error", err)
 			continue
@@ -57,11 +61,23 @@ func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context a
 	context.Parent().Tell(&messages.PublishAck{Filename: msg.Filename})
 
 }
+func initAvroDecoder(schema string) (*goavro.Codec, error) {
+	return goavro.NewCodec(schema)
+}
 
-//CreateFileReaderProps create and spawn and child here
+// CreateFileReaderProps create and spawn and child here
 func CreateFileReaderProps(context actor.Context, bootstrapServers string) *actor.PID {
 
-	fileActor := &fileReadActor{kproducer: NewProducer(bootstrapServers)}
+	avroEncoder, err := initAvroDecoder(avroSchema)
+	if err != nil {
+		log.Fatalln("Unable to create an avro decoder. Check your schema file.")
+	}
+
+	fileActor := &fileReadActor{
+		kproducer: NewProducer(bootstrapServers),
+		avroCodec: avroEncoder,
+	}
+
 	fileReadActorProps := actor.FromInstance(fileActor)
 	return context.Spawn(fileReadActorProps)
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/ansrivas/fwatcher/db"
 	conf "github.com/ansrivas/fwatcher/internal"
 	"github.com/ansrivas/fwatcher/messages"
 	"github.com/ansrivas/fwatcher/workers"
@@ -82,12 +83,13 @@ func main() {
 
 	pid := actor.Spawn(props)
 
+	db.NewDb()
+
 	go watchDirectory(ctx, dirToWatch, pid)
 
 	<-sigchan
 	cancel()
 	pid.Stop()
-
 	fmt.Printf("Terminating the program successfully\n")
 
 }

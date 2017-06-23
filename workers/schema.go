@@ -6,7 +6,7 @@ const avroSchema = `{
   "namespace" : "com.srivastava.avro",
   "fields" : [ {
     "name" : "timestamp",
-    "type" : "string",
+    "type" : "int",
     "doc" : "Datetime format with timezone information"
   }, {
     "name" : "datapoint",

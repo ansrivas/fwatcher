@@ -35,6 +35,13 @@ _recreate_env:	clean
 	chmod +x ./wait-for-it.sh && \
 	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic access_log
 
+
+
+migrate:       ## Run migration to populate the db
+migrate:
+	@go get -u github.com/pressly/goose/cmd/goose
+	@goose -dir db/migrations/ postgres "user=testuser password=testpassword123 dbname=testdb sslmode=disable" $(command)
+
 .PHONY: dock_run_fg
 dock_run_fg:   ## Run docker containers, foreground.
 dock_run_fg:	build_docker
