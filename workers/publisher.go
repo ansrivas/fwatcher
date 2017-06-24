@@ -2,7 +2,6 @@ package workers
 
 import (
 	"log"
-	"strings"
 	"time"
 
 	"gopkg.in/Shopify/sarama.v1"
@@ -14,9 +13,8 @@ type Producer struct {
 }
 
 // NewProducer creates a new Kafka producer
-// brokerList is a comma separated list of Kakfa brokers for eg. "localhost:9092,localhost:9093"
-func NewProducer(brokerList string) Producer {
-	brokers := strings.Split(brokerList, ",")
+// brokers is a list of Kakfa brokers for eg. "localhost:9092,localhost:9093"
+func NewProducer(brokers []string) Producer {
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForLocal       // Only wait for the leader to ack
 	config.Producer.Compression = sarama.CompressionSnappy   // Compress messages
@@ -30,9 +28,9 @@ func NewProducer(brokerList string) Producer {
 }
 
 //Produce produces a test message
-func (p Producer) Produce(value []byte) {
+func (p Producer) Produce(value []byte, topic string) {
 	p.kafkaProducer.Input() <- &sarama.ProducerMessage{
-		Topic: "access_log",
+		Topic: topic,
 		Key:   sarama.StringEncoder("my_key"),
 		Value: sarama.ByteEncoder(value),
 	}

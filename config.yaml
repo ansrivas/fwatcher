@@ -1,5 +1,8 @@
 kafka:
-    hosts: "localhost:19092"
+    hosts:
+      - "localhost:19092"
+    topic: "test_logs"
+
 app:
     dir: ./
     filetypes:

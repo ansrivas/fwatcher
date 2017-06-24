@@ -55,7 +55,9 @@ func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context a
 			fmt.Println("Conversion error", err)
 			continue
 		}
-		state.kproducer.Produce(textual)
+
+		// Figure out topic and partition from this.
+		state.kproducer.Produce(textual, msg.Topic)
 	}
 
 	context.Parent().Tell(&messages.PublishAck{Filename: msg.Filename})
@@ -66,7 +68,8 @@ func initAvroDecoder(schema string) (*goavro.Codec, error) {
 }
 
 // CreateFileReaderProps create and spawn and child here
-func CreateFileReaderProps(context actor.Context, bootstrapServers string) *actor.PID {
+// brokers is a list of kafka brokers
+func CreateFileReaderProps(context actor.Context, brokers []string) *actor.PID {
 
 	avroEncoder, err := initAvroDecoder(avroSchema)
 	if err != nil {
@@ -74,7 +77,7 @@ func CreateFileReaderProps(context actor.Context, bootstrapServers string) *acto
 	}
 
 	fileActor := &fileReadActor{
-		kproducer: NewProducer(bootstrapServers),
+		kproducer: NewProducer(brokers),
 		avroCodec: avroEncoder,
 	}
 

@@ -38,9 +38,11 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	hosts := config.GetString("kafka.hosts")
+	hosts := config.GetStringSlice("kafka.hosts")
 	dirToWatch := config.GetString("app.dir")
 	allowedExtensions := config.GetStringSlice("app.filetypes")
+	topic := config.GetString("kafka.topic")
+
 	log.Println(hosts, dirToWatch)
 
 	sigchan := make(chan os.Signal, 1)
@@ -50,9 +52,13 @@ func main() {
 	initialBackoff := time.Duration(time.Second * 3)
 
 	supervisor := actor.NewExponentialBackoffStrategy(backoffWindow, initialBackoff)
+	coordActor := workers.CoordinatorActor{
+		BootStrapServers: hosts,
+		KafkaTopic:       topic,
+	}
 
 	props := actor.
-		FromInstance(&workers.CoordinatorActor{BootStrapServers: hosts}).
+		FromInstance(&coordActor).
 		WithSupervisor(supervisor)
 
 	pid := actor.Spawn(props)
