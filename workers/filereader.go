@@ -81,6 +81,12 @@ func CreateFileReaderProps(context actor.Context, brokers []string) *actor.PID {
 		avroCodec: avroEncoder,
 	}
 
+	go func() {
+		for err := range fileActor.kproducer.kafkaProducer.Errors() {
+			log.Println("Failed to write access log entry:", err)
+		}
+	}()
+
 	fileReadActorProps := actor.FromInstance(fileActor)
 	return context.Spawn(fileReadActorProps)
 }
