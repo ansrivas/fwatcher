@@ -25,7 +25,7 @@ func Test_ToFloat(t *testing.T) {
 
 	assert := assert.New(t)
 	actual := "12"
-	expected := float64(12)
+	expected := float32(12)
 
 	fvalue, _ := toFloat(actual)
 	assert.Equal(fvalue, expected)

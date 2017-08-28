@@ -1,3 +1,6 @@
+DEP := $(shell command -v dep 2>/dev/null)
+BUILD_TIME=`date -u +%FT%T%z`
+
 .DEFAULT_GOAL := help
 
 help:          ## Show available options with this Makefile
@@ -7,6 +10,13 @@ help:          ## Show available options with this Makefile
 test:          ## Run all the tests
 test:
 	./test.sh
+
+dep:
+	go get -u github.com/golang/dep/cmd/dep
+ifndef DEP
+	make dep
+endif
+	dep ensure
 
 clean:         ## Clean the application and remove all the docker containers.
 	@go clean -i ./...
@@ -33,9 +43,7 @@ _recreate_env: ## Recreate the docker environment and create a default topic.
 _recreate_env:	clean
 	docker-compose up -d && \
 	chmod +x ./wait-for-it.sh && \
-	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic access_log
-
-
+	./wait-for-it.sh localhost:19092 --timeout=0 --	docker exec -it kafka-01-c /usr/bin/kafka-topics --create --zookeeper localhost:22181 --replication-factor 1 --partitions 100 --topic test_topic
 
 migrate:       ## Run migration to populate the db
 migrate:

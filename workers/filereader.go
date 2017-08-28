@@ -1,9 +1,10 @@
 package workers
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
@@ -19,15 +20,19 @@ type fileReadActor struct {
 // publishFileToKafka publishes a file to Kafka in a avro-serialized manner.
 // Currently the schema is hardcoded but can be easily extend to be passed from outside.
 func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context actor.Context) {
-
-	data, err := readFile(msg.Filename)
+	log.Printf("Now reading file: %s", msg.Filename)
+	fileHandle, err := os.Open(msg.Filename)
+	defer fileHandle.Close()
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("Unable to open the file %s", msg.Filename)
 		return
 	}
+	fileReader := bufio.NewScanner(fileHandle)
 
 	mymap := make(map[string]interface{})
-	for num, line := range strings.Split(string(data), "\n") {
+	var num = 0
+	for fileReader.Scan() {
+		line := fileReader.Text()
 		row := strings.Split(line, ";")
 		if len(row) != 3 {
 			log.Printf("Error: Unreadable row from file %s in  lineno %d, line %s", msg.Filename, num+1, line)
@@ -56,6 +61,7 @@ func (state *fileReadActor) publishFileToKafka(msg *messages.ReadFile, context a
 			continue
 		}
 		state.kproducer.Produce(textual)
+		num++
 	}
 
 	context.Parent().Tell(&messages.PublishAck{Filename: msg.Filename})
@@ -98,13 +104,4 @@ func (state *fileReadActor) Receive(context actor.Context) {
 	case *messages.PublishAck:
 		fmt.Println("File has been successfully published")
 	}
-}
-
-func readFile(filename string) (string, error) {
-	log.Println("Now reading file: ", filename)
-	dat, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return "", fmt.Errorf("Unable to read file: %s", filename)
-	}
-	return string(dat), nil
 }

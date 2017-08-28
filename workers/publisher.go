@@ -26,13 +26,19 @@ func NewProducer(brokerList string) Producer {
 	if err != nil {
 		log.Fatalln("Failed to start Sarama producer:", err)
 	}
+	go func() {
+		for err := range producer.Errors() {
+			log.Println("Failed to write access log entry:", err)
+		}
+	}()
+
 	return Producer{kafkaProducer: producer}
 }
 
-//Produce produces a test message
+//Produce produces a message
 func (p Producer) Produce(value []byte) {
 	p.kafkaProducer.Input() <- &sarama.ProducerMessage{
-		Topic: "access_log",
+		Topic: "test_topic",
 		Key:   sarama.StringEncoder("my_key"),
 		Value: sarama.ByteEncoder(value),
 	}

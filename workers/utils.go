@@ -12,8 +12,13 @@ func init() {
 	now.TimeFormats = append(now.TimeFormats, "2006-01-02T15:04:05")
 }
 
-func toFloat(input string) (float64, error) {
-	return strconv.ParseFloat(strings.TrimSpace(input), 32)
+func toFloat(input string) (float32, error) {
+	// var value float32
+	val, err := strconv.ParseFloat(strings.TrimSpace(input), 32)
+	if err != nil {
+		return 0, err
+	}
+	return float32(val), err
 }
 
 func convertToUTC(ts string) (int64, error) {
