@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   zk4kafka-01-s:
     image: confluentinc/cp-zookeeper:latest
@@ -22,11 +22,11 @@ services:
       - zk4kafka-01-s
     environment:
       KAFKA_BROKER_ID: 1
+      KAFKA_COMPRESSION_TYPE: snappy
       KAFKA_ZOOKEEPER_CONNECT: localhost:22181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_DELETE_TOPIC_ENABLE: 'true'
-      KAKFA_COMPRESSION_TYPE: 'snappy'
     restart: always
     network_mode: host
     volumes:
