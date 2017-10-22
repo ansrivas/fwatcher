@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -13,15 +14,18 @@ var (
 )
 
 func init() {
-	l := &ioLogger{out: os.Stderr}
+	l := &ioLogger{lock: &sync.Mutex{}, out: os.Stderr}
 	sub = Subscribe(func(evt Event) {
+		l.lock.Lock()
 		l.WriteEvent(evt)
+		l.lock.Unlock()
 	})
 }
 
 type ioLogger struct {
-	out io.Writer
-	buf []byte
+	lock *sync.Mutex
+	out  io.Writer
+	buf  []byte
 }
 
 // Cheap integer to fixed-width decimal ASCII.  Give a negative width to avoid zero-padding.
@@ -97,7 +101,7 @@ type ioEncoder struct {
 }
 
 func (e ioEncoder) EncodeBool(key string, val bool) {
-	fmt.Fprintf(e, "%s=%b", key, val)
+	fmt.Fprintf(e, "%s=%t", key, val)
 }
 
 func (e ioEncoder) EncodeFloat64(key string, val float64) {

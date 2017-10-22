@@ -35,8 +35,9 @@ type mockProcess struct {
 	mock.Mock
 }
 
-func (m *mockProcess) SendUserMessage(pid *actor.PID, message interface{}, sender *actor.PID) {
-	m.Called(pid, message, sender)
+func (m *mockProcess) SendUserMessage(pid *actor.PID, message interface{}) {
+	msg, _ := actor.UnwrapEnvelope(message)
+	m.Called(pid, msg)
 }
 func (m *mockProcess) SendSystemMessage(pid *actor.PID, message interface{}) {
 	m.Called(pid, message)
@@ -145,4 +146,9 @@ func (m *mockContext) Actor() actor.Actor {
 
 func (m *mockContext) AwaitFuture(f *actor.Future, cont func(res interface{}, err error)) {
 	m.Called(f, cont)
+}
+
+func (m *mockContext) RequestFuture(pid *actor.PID, message interface{}, timeout time.Duration) *actor.Future {
+	args := m.Called()
+	return args.Get(0).(*actor.Future)
 }

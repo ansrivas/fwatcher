@@ -1,11 +1,28 @@
 package actor
 
 import (
+	//	"fmt"
+	//	"github.com/gogo/protobuf/jsonpb"
 	"strings"
 	"sync/atomic"
 	"time"
 	"unsafe"
 )
+
+type PID struct {
+	Address string `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
+	Id      string `protobuf:"bytes,2,opt,name=Id,proto3" json:"Id,omitempty"`
+
+	p *Process `json:"-"`
+}
+
+
+
+/*
+func (m *PID) MarshalJSONPB(*jsonpb.Marshaler) ([]byte, error) {
+	str := fmt.Sprintf("{\"Address\":\"%v\", \"Id\":\"%v\"}", m.Address, m.Id)
+	return []byte(str), nil
+}*/
 
 func (pid *PID) ref() Process {
 	p := (*Process)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&pid.p))))
@@ -27,19 +44,29 @@ func (pid *PID) ref() Process {
 
 // Tell sends a messages asynchronously to the PID
 func (pid *PID) Tell(message interface{}) {
-	pid.ref().SendUserMessage(pid, message, nil)
+	pid.ref().SendUserMessage(pid, message)
 }
 
 // Request sends a messages asynchronously to the PID. The actor may send a response back via respondTo, which is
 // available to the receiving actor via Context.Sender
 func (pid *PID) Request(message interface{}, respondTo *PID) {
-	pid.ref().SendUserMessage(pid, message, respondTo)
+	env := &MessageEnvelope{
+		Message: message,
+		Header:  emptyMessageHeader,
+		Sender:  respondTo,
+	}
+	pid.ref().SendUserMessage(pid, env)
 }
 
 // RequestFuture sends a message to a given PID and returns a Future
 func (pid *PID) RequestFuture(message interface{}, timeout time.Duration) *Future {
 	future := NewFuture(timeout)
-	pid.ref().SendUserMessage(pid, message, future.pid)
+	env := &MessageEnvelope{
+		Message: message,
+		Header:  emptyMessageHeader,
+		Sender:  future.PID(),
+	}
+	pid.ref().SendUserMessage(pid, env)
 	return future
 }
 
@@ -54,6 +81,10 @@ func (pid *PID) StopFuture() *Future {
 	pid.Stop()
 
 	return future
+}
+
+func (pid *PID) GracefulStop() {
+	pid.StopFuture().Wait()
 }
 
 //Stop the given PID
