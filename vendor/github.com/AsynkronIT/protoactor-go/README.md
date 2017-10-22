@@ -83,30 +83,40 @@ For a more indepth description of the differences, see this thread [Actors vs. C
 
 You need to ensure that your `$GOPATH` variable is properly set.
 
-Next, install the [standard protocol buffer implementation](https://github.com/google/protobuf) and run the following commands to get all the neccessary tooling:
+Next, install the [standard protocol buffer implementation](https://github.com/google/protobuf) and run the following commands to get all the necessary tooling:
+
 ```
-go get github.com/gogo/protobuf/proto
-go get github.com/gogo/protobuf/protoc-gen-gogo
-go get github.com/gogo/protobuf/gogoproto
-go get github.com/gogo/protobuf/protoc-gen-gofast
-go get google.golang.org/grpc
-go get github.com/gogo/protobuf/protoc-gen-gogofast
-go get github.com/gogo/protobuf/protoc-gen-gogofaster
-go get github.com/gogo/protobuf/protoc-gen-gogoslick
-go get github.com/Workiva/go-datastructures/queue
-go get github.com/emirpasic/gods/stacks/linkedliststack
-go get github.com/orcaman/concurrent-map
-go get github.com/AsynkronIT/gonet
-go get github.com/hashicorp/consul/api
-go get github.com/AsynkronIT/goconsole
-go get github.com/emirpasic/gods/sets/hashset
-go get github.com/serialx/hashring
-go get github.com/couchbase/gocb
+go get github.com/AsynkronIT/protoactor-go/...
+cd $GOPATH/src/github.com/AsynkronIT/protoactor-go
+go get ./...
+make
 ```
 
-Finally, run the `make` tool in the package's root to generate the protobuf definitions and build the packages.
+After invoking last command you will have generated protobuf definitions and built the project.
 
 Windows users can use Cygwin to run make: [www.cygwin.com](https://www.cygwin.com/)
+
+## Testing
+
+This command exectutes all tests in the repository except for consul integration tests (you need consul for running those tests). We also skip directories that don't contain any tests.
+
+```
+go test `go list ./... | grep -v consul` | grep 'no test files'
+```
+
+If everything is ok, you will get the output:
+
+```
+ok  	github.com/AsynkronIT/protoactor-go/actor	0.115s
+ok  	github.com/AsynkronIT/protoactor-go/eventstream	0.020s
+ok  	github.com/AsynkronIT/protoactor-go/internal/queue/goring	2.524s
+ok  	github.com/AsynkronIT/protoactor-go/internal/queue/mpsc	2.385s
+ok  	github.com/AsynkronIT/protoactor-go/log	0.017s
+ok  	github.com/AsynkronIT/protoactor-go/mailbox	2.742s
+ok  	github.com/AsynkronIT/protoactor-go/plugin	1.227s
+ok  	github.com/AsynkronIT/protoactor-go/router	1.836s
+ok  	github.com/AsynkronIT/protoactor-go/stream	0.017s
+```
 
 ## Hello world
 
@@ -188,15 +198,15 @@ func (state *HelloActor) Receive(context actor.Context) {
 
 func main() {
     props := actor.FromInstance(&HelloActor{})
-    actor := actor.Spawn(props)
-    actor.Tell(Hello{Who: "Roger"})
+    pid := actor.Spawn(props)
+    actor.Tell(pid, Hello{Who: "Roger"})
 
     //why wait?
     //Stop is a system message and is not processed through the user message mailbox
     //thus, it will be handled _before_ any user message
     //we only do this to show the correct order of events in the console
     time.Sleep(1 * time.Second)
-    actor.Stop()
+    pid.Stop()
 
     console.ReadLine()
 }
@@ -250,7 +260,7 @@ func NewChildActor() actor.Actor {
 }
 
 func main() {
-    decider := func(child *actor.PID, reason interface{}) actor.Directive {
+    decider := func(reason interface{}) actor.Directive {
         fmt.Println("handling failure for child")
         return actor.StopDirective
     }
@@ -288,7 +298,7 @@ func (state *MyActor) Receive(context actor.Context) {
 }
 
 func main() {
-    remote.StartServer("localhost:8090")
+    remote.Start("localhost:8090")
 
     pid := actor.SpawnTemplate(&MyActor{})
     message := &messages.Echo{Message: "hej", Sender: pid}
@@ -318,11 +328,10 @@ func (*MyActor) Receive(context actor.Context) {
 }
 
 func main() {
-    remote.StartServer("localhost:8091")
-    pid := actor.SpawnTemplate(&MyActor{})
+    remote.Start("localhost:8091")
 
     //register a name for our local actor so that it can be discovered remotely
-    actor.ProcessRegistry.Register("myactor", pid)
+    remote.Register("hello", actor.FromInstance(&MyActor{}))
     console.ReadLine()
 }
 ```
@@ -348,3 +357,6 @@ message Response {
 
 For more examples, see the example folder in this repository.
 
+### Support
+
+Many thanks to [JetBrains](https://www.jetbrains.com) for support!

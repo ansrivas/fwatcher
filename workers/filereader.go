@@ -9,7 +9,7 @@ import (
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/ansrivas/fwatcher/messages"
-	"github.com/karrick/goavro"
+	"github.com/linkedin/goavro"
 )
 
 type fileReadActor struct {

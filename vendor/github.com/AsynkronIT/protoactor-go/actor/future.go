@@ -109,8 +109,9 @@ type futureProcess struct {
 	Future
 }
 
-func (ref *futureProcess) SendUserMessage(pid *PID, message interface{}, sender *PID) {
-	ref.result = message
+func (ref *futureProcess) SendUserMessage(pid *PID, message interface{}) {
+	msg, _ := UnwrapEnvelope(message)
+	ref.result = msg
 	ref.Stop(pid)
 }
 
@@ -138,7 +139,7 @@ func (ref *futureProcess) Stop(pid *PID) {
 
 //TODO: we could replace "pipes" with this
 //instead of pushing PIDs to pipes, we could push wrapper funcs that tells the pid
-//as a completeion, that would unify the model
+//as a completion, that would unify the model
 func (f *Future) runCompletions() {
 	if f.completions == nil {
 		return

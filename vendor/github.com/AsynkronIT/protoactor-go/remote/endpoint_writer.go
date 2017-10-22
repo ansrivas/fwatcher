@@ -1,8 +1,9 @@
 package remote
 
 import (
-	"github.com/AsynkronIT/protoactor-go/actor"
+	"time"
 
+	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/AsynkronIT/protoactor-go/eventstream"
 	"github.com/AsynkronIT/protoactor-go/log"
 	"golang.org/x/net/context"
@@ -19,28 +20,39 @@ func newEndpointWriter(address string, config *remoteConfig) actor.Producer {
 }
 
 type endpointWriter struct {
-	config  *remoteConfig
-	address string
-	conn    *grpc.ClientConn
-	stream  Remoting_ReceiveClient
+	config              *remoteConfig
+	address             string
+	conn                *grpc.ClientConn
+	stream              Remoting_ReceiveClient
+	defaultSerializerId int32
 }
 
 func (state *endpointWriter) initialize() {
 	err := state.initializeInternal()
 	if err != nil {
 		plog.Error("EndpointWriter failed to connect", log.String("address", state.address), log.Error(err))
+		//Wait 2 seconds to restart and retry
+		//Replace with Exponential Backoff
+		time.Sleep(2 * time.Second)
+		panic(err)
 	}
 }
 
 func (state *endpointWriter) initializeInternal() error {
 	plog.Info("Started EndpointWriter", log.String("address", state.address))
-	plog.Info("EndpointWatcher connecting", log.String("address", state.address))
+	plog.Info("EndpointWriter connecting", log.String("address", state.address))
 	conn, err := grpc.Dial(state.address, state.config.dialOptions...)
 	if err != nil {
 		return err
 	}
 	state.conn = conn
 	c := NewRemotingClient(conn)
+	resp, err := c.Connect(context.Background(), &ConnectRequest{})
+	if err != nil {
+		return err
+	}
+	state.defaultSerializerId = resp.DefaultSerializerId
+
 	//	log.Printf("Getting stream from address %v", state.address)
 	stream, err := c.Receive(context.Background(), state.config.callOptions...)
 	if err != nil {
@@ -60,6 +72,8 @@ func (state *endpointWriter) initializeInternal() error {
 	}()
 
 	plog.Info("EndpointWriter connected", log.String("address", state.address))
+	connected := &EndpointConnectedEvent{Address: state.address}
+	eventstream.Publish(connected)
 	state.stream = stream
 	return nil
 }
@@ -74,17 +88,28 @@ func (state *endpointWriter) sendEnvelopes(msg []interface{}, ctx actor.Context)
 	targetNamesArr := make([]string, 0)
 	var typeID int32
 	var targetID int32
+	var serializerID int32
 	for i, tmp := range msg {
 		rd := tmp.(*remoteDeliver)
-		bytes, typeName, _ := serialize(rd.message)
+
+		if rd.serializerID == -1 {
+			serializerID = state.defaultSerializerId
+		} else {
+			serializerID = rd.serializerID
+		}
+		bytes, typeName, err := Serialize(rd.message, serializerID)
+		if err != nil {
+			panic(err)
+		}
 		typeID, typeNamesArr = addToLookup(typeNames, typeName, typeNamesArr)
 		targetID, targetNamesArr = addToLookup(targetNames, rd.target.Id, targetNamesArr)
 
 		envelopes[i] = &MessageEnvelope{
-			MessageData: bytes,
-			Sender:      rd.sender,
-			Target:      targetID,
-			TypeId:      typeID,
+			MessageData:  bytes,
+			Sender:       rd.sender,
+			Target:       targetID,
+			TypeId:       typeID,
+			SerializerId: serializerID,
 		}
 	}
 
@@ -123,7 +148,9 @@ func (state *endpointWriter) Receive(ctx actor.Context) {
 		state.conn.Close()
 	case []interface{}:
 		state.sendEnvelopes(msg, ctx)
+	case actor.SystemMessage, actor.AutoReceiveMessage:
+		//ignore
 	default:
-		plog.Error("Unknown message", log.Message(msg))
+		plog.Error("EndpointWriter received unknown message", log.String("address", state.address), log.TypeOf("type", msg), log.Message(msg))
 	}
 }
