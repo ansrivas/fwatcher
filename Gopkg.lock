@@ -77,7 +77,7 @@
   branch = "master"
   name = "github.com/lib/pq"
   packages = [".","oid"]
-  revision = "b0d5024adb34b4122c6ee7eeb6ab511f7223222d"
+  revision = "b609790bd85edf8e9ab7e0f8912750a786177bcf"
 
 [[projects]]
   name = "github.com/linkedin/goavro"
@@ -173,7 +173,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+  revision = "a1a1f1746d156bbc9954f29134b20ed4ce2752f1"
 
 [[projects]]
   branch = "master"
