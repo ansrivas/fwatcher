@@ -34,9 +34,7 @@ func main() {
 		log.Fatalf("No config file provided... ")
 	}
 	config, err := conf.GetConfig(configPath)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
+	checkAndExit(err)
 
 	hosts := config.GetString("kafka.hosts")
 	dirToWatch := config.GetString("app.dir")

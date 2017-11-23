@@ -11,6 +11,12 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+func checkAndExit(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func isFileTypeAllowed(ext string, allowedExt []string) bool {
 	for _, e := range allowedExt {
 		if ext == e {
@@ -22,15 +28,11 @@ func isFileTypeAllowed(ext string, allowedExt []string) bool {
 
 func watchDirectory(ctx context.Context, dirToWatch string, allowedExt []string, pid *actor.PID) {
 	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkAndExit(err)
 	defer watcher.Close()
 
 	err = watcher.Add(dirToWatch)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkAndExit(err)
 
 	for {
 		select {
